@@ -571,16 +571,16 @@ img {
 }
 
 .category__button[data-category="All"] {
-    background: #f3e8ff;
-    color: #9333ea;
-    border-color: #d8b4fe;
+    background: var(--accent-soft);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
     font-weight: 700;
 }
 
 .category__button[data-category="All"].category__button--active {
-    background: #9333ea;
+    background: var(--accent-color);
     color: white;
-    border-color: #7e22ce;
+    border-color: var(--accent-color);
 }
 
 /* Checklist Item Category Icon */
@@ -653,9 +653,8 @@ img {
 }
 
 .todo__item-checkbox--checked::after {
-    content: '✓';
-    color: white;
-    font-size: 12px;
+    content: '✅';
+    font-size: 14px;
 }
 
 .todo__item-text {
