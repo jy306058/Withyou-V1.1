@@ -73,6 +73,21 @@ let stopwatchState = {
 function init() {
     loadState();
     
+    // Ensure state structure is intact
+    if (!state.settings) state.settings = {};
+    if (!state.profiles || state.profiles.length === 0) {
+        state.profiles = [{
+            name: '지윤',
+            image: '', 
+            msgIdle: ['우리 같이 집중해 볼까요? 💙'],
+            msgStart: ['오늘도 집중해서 잘해보자!'],
+            msgEnd: ['고생했어! 이제 나랑 푹 쉬자 💙'],
+            msgClear: ['전부 다 해내다니, 역시 대단해!'],
+            remindMessages: []
+        }];
+    }
+    if (state.currentProfileIndex >= state.profiles.length) state.currentProfileIndex = 0;
+    
     // Migration check
     state.profiles.forEach(p => {
         if (typeof p.msgIdle === 'string') p.msgIdle = [p.msgIdle];
@@ -80,6 +95,7 @@ function init() {
         if (typeof p.msgStart === 'string') p.msgStart = [p.msgStart];
         if (typeof p.msgEnd === 'string') p.msgEnd = [p.msgEnd];
         if (typeof p.msgClear === 'string') p.msgClear = [p.msgClear];
+        if (!p.remindMessages) p.remindMessages = [];
     });
 
     if (state.settings.isRemindEnabled === undefined) state.settings.isRemindEnabled = false;
@@ -103,10 +119,19 @@ function saveState() {
 }
 
 // --- NAVIGATION & THEME ---
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('page--active'));
-    document.getElementById(pageId).classList.add('page--active');
-}
+window.showPage = function(pageId) {
+    console.log('Changing page to:', pageId);
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(p => p.classList.remove('page--active'));
+    
+    const target = document.getElementById(pageId);
+    if (target) {
+        target.classList.add('page--active');
+        window.scrollTo(0, 0);
+    } else {
+        console.error('Page element not found:', pageId);
+    }
+};
 
 function applyTheme(themeClass) {
     document.body.className = '';
@@ -134,7 +159,7 @@ function formatMessage(nickname, message) {
     const nickWithSymbol = hasExclamation ? `${nickname}!` : nickname;
     
     const formats = [
-        `${nickWithSymbol}, ${message}`, 
+        hasExclamation ? `${nickWithSymbol} ${message}` : `${nickWithSymbol}, ${message}`, 
         `${message} ${nickWithSymbol}`, 
         `${message}`                    
     ];
@@ -171,13 +196,9 @@ function formatTime(totalSeconds) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function updateCircularProgress(percent) {
-    const circle = document.getElementById('timer-circle-progress');
-    const radius = 45;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (percent / 100) * circumference;
-    circle.style.strokeDasharray = circumference;
-    circle.style.strokeDashoffset = offset;
+function updateProgressBar(percent) {
+    const bar = document.getElementById('timer-bar-fill');
+    if (bar) bar.style.width = `${percent}%`;
 }
 
 function renderTimer() {
@@ -211,7 +232,7 @@ function renderTimer() {
     }
 
     timeDisplay.textContent = formatTime(currentSeconds);
-    updateCircularProgress(percent);
+    updateProgressBar(percent);
 
     const startBtn = document.getElementById('timer-start');
     const pauseBtn = document.getElementById('timer-pause');
@@ -255,8 +276,8 @@ function handleTick() {
         stopwatchState.seconds++;
     }
     
-    // 🔥 30-minute reminder logic
-    if (currentMode !== MODES.POMODORO && state.settings.isRemindEnabled) {
+    // 🔥 리마인드 알림 로직 (모든 모드에서 작동하도록 변경)
+    if (state.settings.isRemindEnabled) {
         remindCounter++;
         const intervalInSeconds = (state.settings.remindInterval || 30) * 60;
         if (remindCounter >= intervalInSeconds) {
@@ -317,21 +338,22 @@ function showRemindModal() {
     const nickname = profile.name || state.settings.nickname || '최애';
     
     let msg = '';
-    const validRemindMsgs = (state.settings.remindMessages || []).filter(m => m.trim() !== '');
+    const validRemindMsgs = (profile.remindMessages || []).filter(m => m.trim() !== '');
     if (validRemindMsgs.length > 0) {
         msg = validRemindMsgs[Math.floor(Math.random() * validRemindMsgs.length)];
     } else {
+        msg = '우리 같이 힘내볼까요? 💙'; // 기본 메시지
     }
 
     document.getElementById('remind-bubble-text').textContent = `🗨️ ${nickname} : ${msg}`;
     const bubble = document.getElementById('remind-bubble');
     bubble.classList.add('remind-bubble--active');
 
-    // 4초 뒤 자동 닫힘 및 타이머 꼬임 방지
+    // 10초 뒤 자동 닫힘 및 타이머 꼬임 방지
     if (toastTimeout) clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         closeRemindBubble();
-    }, 4000);
+    }, 10000);
 }
 
 // 🔥 수동 닫기 버튼용 함수
@@ -435,14 +457,30 @@ function setMode(mode) {
 function renderChecklist() {
     const todoList = document.getElementById('todo-list');
     todoList.innerHTML = '';
-    const filteredTasks = state.tasks.filter(t => t.category === state.activeCategory);
+    
+    const categoryEmojiMap = {
+        Work: '💻',
+        Study: '✏️',
+        Reading: '📖',
+        Etc: '💡'
+    };
+
+    const filteredTasks = state.tasks.filter(t => {
+        if (state.activeCategory === 'All') return true;
+        return t.category === state.activeCategory;
+    });
 
     filteredTasks.forEach((task) => {
         const li = document.createElement('li');
         li.className = `todo__item ${task.completed ? 'todo__item--completed' : ''}`;
+        
+        const categoryIcon = state.activeCategory === 'All' 
+            ? `<span class="todo__category-icon">${categoryEmojiMap[task.category] || ''}</span>`
+            : '';
+
         li.innerHTML = `
             <div class="todo__item-checkbox ${task.completed ? 'todo__item-checkbox--checked' : ''}" data-id="${task.id}"></div>
-            <span class="todo__item-text">${task.text}</span>
+            <span class="todo__item-text">${categoryIcon}${task.text}</span>
             <button class="todo__item-delete" data-id="${task.id}" style="color:red; font-size: 0.8rem; margin-left: auto; cursor:pointer;">삭제</button>
         `;
         todoList.appendChild(li);
@@ -492,7 +530,6 @@ function renderSettings() {
     const remindToggle = document.getElementById('settings-remind-toggle');
     remindToggle.checked = !!state.settings.isRemindEnabled;
     document.getElementById('remind-interval-area').style.display = remindToggle.checked ? 'block' : 'none';
-    document.getElementById('remind-custom-area').style.display = remindToggle.checked ? 'block' : 'none';
     
     const interval = state.settings.remindInterval || 30;
     const intervalRadio = document.querySelector(`input[name="remind-interval"][value="${interval}"]`);
@@ -505,7 +542,7 @@ function renderSettings() {
         document.getElementById('settings-remind-custom').value = interval;
     }
 
-    renderRemindMessageSlots(state.settings.remindMessages || []);
+    // Reminder messages are now per-profile
 }
 
 function renderRemindMessageSlots(messages) {
@@ -528,7 +565,7 @@ function openProfileModal(index) {
     document.getElementById('finish-modal').style.display = 'none';
 
     const isNew = index === -1;
-    const profile = isNew ? { name: '', image: '', msgIdle: [], msgStart: [], msgEnd: [], msgClear: [] } : state.profiles[index];
+    const profile = isNew ? { name: '', image: '', msgIdle: [], msgStart: [], msgEnd: [], msgClear: [], remindMessages: [] } : state.profiles[index];
     
     document.getElementById('profile-edit-name').value = profile.name;
     document.getElementById('profile-edit-preview').src = profile.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3C/svg%3E";
@@ -537,6 +574,7 @@ function openProfileModal(index) {
     renderMessageSlots('start', profile.msgStart || []);
     renderMessageSlots('end', profile.msgEnd || []);
     renderMessageSlots('clear', profile.msgClear || []);
+    renderMessageSlots('remind', profile.remindMessages || []);
     
     document.getElementById('profile-save').onclick = () => saveProfile(index);
 }
@@ -598,7 +636,8 @@ function saveProfile(index) {
         msgIdle: getMessages('idle'),
         msgStart: getMessages('start'),
         msgEnd: getMessages('end'),
-        msgClear: getMessages('clear')
+        msgClear: getMessages('clear'),
+        remindMessages: getMessages('remind')
     };
 
     if (index === -1) state.profiles.push(profileData);
@@ -615,9 +654,16 @@ function closeModals() {
 
 // --- EVENT LISTENERS ---
 function setupEventListeners() {
-    document.getElementById('nav-main').onclick = () => showPage('page-timer');
-    document.getElementById('nav-profiles').onclick = () => showPage('page-profiles');
-    document.getElementById('nav-settings').onclick = () => showPage('page-settings');
+    // Standard listeners are maintained for redundancy, 
+    // but index.html now uses global showPage directly for GNB to avoid any capture issue.
+    const navProfiles = document.getElementById('nav-profiles');
+    if (navProfiles) navProfiles.onclick = () => window.showPage('page-profiles');
+    
+    const navSettings = document.getElementById('nav-settings');
+    if (navSettings) navSettings.onclick = () => window.showPage('page-settings');
+    
+    const navMain = document.getElementById('nav-main');
+    if (navMain) navMain.onclick = () => window.showPage('page-timer');
     
     document.getElementById('timer-start').onclick = startEngine;
     document.getElementById('timer-pause').onclick = pauseEngine;
@@ -705,22 +751,15 @@ function setupEventListeners() {
         if (intervalType === 'custom') {
             const customVal = parseInt(document.getElementById('settings-remind-custom').value);
             remindInterval = (isNaN(customVal) || customVal <= 0) ? 30 : customVal;
+            if (remindInterval > 180) remindInterval = 180;
         } else {
             remindInterval = parseInt(intervalType);
         }
-
-        const remindInputs = document.querySelectorAll('#remind-msg-list .form__input');
-        const rMsgs = [];
-        remindInputs.forEach(input => {
-            const val = input.value.trim();
-            if (val) rMsgs.push(val);
-        });
 
         if (nickname) state.settings.nickname = nickname;
         state.settings.theme = theme;
         state.settings.isRemindEnabled = isRemindEnabled;
         state.settings.remindInterval = remindInterval;
-        state.settings.remindMessages = rMsgs;
 
         applyTheme(theme);
         saveState();
@@ -732,7 +771,6 @@ function setupEventListeners() {
     document.getElementById('settings-remind-toggle').onchange = (e) => {
         const isChecked = e.target.checked;
         document.getElementById('remind-interval-area').style.display = isChecked ? 'block' : 'none';
-        document.getElementById('remind-custom-area').style.display = isChecked ? 'block' : 'none';
     };
 
     document.querySelectorAll('input[name="remind-interval"]').forEach(radio => {

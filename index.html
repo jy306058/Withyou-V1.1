@@ -11,15 +11,13 @@
     <!-- GNB: Global Navigation Bar -->
     <header class="gnb">
         <div class="gnb__container">
-            <h1 class="gnb__logo" id="nav-main">With You</h1>
+            <h1 class="gnb__logo" id="nav-main" onclick="showPage('page-timer')">With You</h1>
             <nav class="gnb__nav">
-                <button class="gnb__button" id="nav-profiles" title="프로필 관리">
-                    <span>프로필관리</span> </span>
+                <button class="gnb__button" id="nav-profiles" title="프로필 관리" onclick="showPage('page-profiles')">
+                    <span>프로필관리</span>
                 </button>
-                <button class="gnb__button" id="nav-settings" title="환경설정">
-                    <span>환경설정</span> 
-                
-                    </span>
+                <button class="gnb__button" id="nav-settings" title="환경설정" onclick="showPage('page-settings')">
+                    <span>환경설정</span>
                 </button>
             </nav>
         </div>
@@ -53,13 +51,12 @@
                 <div class="timer__container" id="timer-container">
 
 
-                    <div class="timer__circle-wrapper">
-                        <svg class="timer__svg" viewBox="0 0 100 100">
-                            <circle class="timer__circle-bg" cx="50" cy="50" r="45"></circle>
-                            <circle class="timer__circle-progress" id="timer-circle-progress" cx="50" cy="50" r="45"></circle>
-                        </svg>
+                    <div class="timer__progress-wrapper">
                         <div class="timer__display">
                             <span id="timer-time">25:00</span>
+                        </div>
+                        <div class="timer__bar-container">
+                            <div class="timer__bar-fill" id="timer-bar-fill"></div>
                         </div>
                     </div>
 
@@ -87,6 +84,7 @@
                 <aside class="checklist">
                     <h2 class="checklist__title">체크리스트</h2>
                     <div class="checklist__categories">
+                        <button class="category__button" data-category="All">전체 ✅</button>
                         <button class="category__button category__button--active" data-category="Work">업무 💻</button>
                         <button class="category__button" data-category="Study">공부 ✏️</button>
                         <button class="category__button" data-category="Reading">독서 📖</button>
@@ -180,15 +178,11 @@
                             <label class="interval__option"><input type="radio" name="remind-interval" value="custom"> 기타</label>
                         </div>
                         <div id="custom-interval-input-area" style="display: none; margin-top: 10px;">
-                            <input type="number" id="settings-remind-custom" class="form__input" placeholder="분 단위를 입력하세요 (예: 15)">
+                            <input type="number" id="settings-remind-custom" class="form__input" placeholder="분 단위를 입력하세요 (최대 180)" max="180">
                         </div>
                     </div>
 
-                    <div id="remind-custom-area" class="form__group" style="display: none;">
-                        <label class="form__label">리마인드 대사 커스터마이징</label>
-                        <div id="remind-msg-list" class="form__input-list"></div>
-                        <button type="button" class="button--add-msg" onclick="addRemindMessageSlot()">+ 대사 추가</button>
-                    </div>
+
                 </section>
 
                 <div class="settings__actions">
@@ -200,7 +194,7 @@
 
     <footer class="footer">
         <div class="footer__container">
-            <p class="footer__text">&copy; 2024 With You. 최애와 함께하는 특별한 시간.</p>
+            <p class="footer__text">&copy; With You. 최애와 함께하는 특별한 시간.</p>
         </div>
     </footer>
 
@@ -249,6 +243,12 @@
                     </div>
                 </div>
 
+                <div class="form__group">
+                    <label class="form__label">리마인드 멘트 설정 (각 캐릭터 전용)</label>
+                    <div id="remind-msg-list" class="form__input-list"></div>
+                    <button type="button" class="button--add-msg" onclick="addMessageSlot('remind')">+ 대사 추가</button>
+                </div>
+                
                 <button id="profile-save" class="button button--primary button--full">저장하기</button>
             </div>
         </div>
@@ -260,8 +260,6 @@
                 <p id="finish-message" class="finish__message">고생했어! 이제 나랑 푹 쉬자 💙</p>
                 <button id="finish-modal-close" class="button button--primary">확인</button>
             </div>
-        </div>
-
         </div>
     </div>
 
