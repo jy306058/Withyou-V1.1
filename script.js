@@ -66,6 +66,10 @@ const POMODORO_TIMES = {
 };
 
 // Global Timer Engine State
+let targetEndTime = 0;
+let startTimestamp = 0;
+let lastTickTime = 0;
+
 let currentMode = MODES.TIMER;
 let timerInterval = null;
 let isTimerRunning = false;
@@ -529,25 +533,32 @@ function renderLaps() {
 
 // --- TIMER ENGINE ---
 function handleTick() {
+    const now = Date.now();
+    const deltaSeconds = (now - lastTickTime) / 1000;
+    lastTickTime = now;
+
     if (currentMode === MODES.POMODORO) {
-        pomodoroState.seconds--;
-        if (pomodoroState.seconds <= 0) handlePomodoroEnd();
+        const remaining = Math.round((targetEndTime - now) / 1000);
+        pomodoroState.seconds = Math.max(0, remaining);
+        if (pomodoroState.seconds === 0) handlePomodoroEnd();
     } 
     else if (currentMode === MODES.TIMER) {
-        timerState.seconds--;
-        if (timerState.seconds <= 0) handleTimerEnd();
+        const remaining = Math.round((targetEndTime - now) / 1000);
+        timerState.seconds = Math.max(0, remaining);
+        if (timerState.seconds === 0) handleTimerEnd();
     } 
     else if (currentMode === MODES.STOPWATCH) {
-        stopwatchState.seconds++;
+        const elapsed = Math.round((now - startTimestamp) / 1000);
+        stopwatchState.seconds = elapsed;
     }
     
-    // 🔥 리마인드 알림 로직 (모든 모드에서 작동하도록 변경)
+    // 🔥 리마인드 알림 로직 (절대 시간 기반 delta 누적)
     if (state.settings.isRemindEnabled) {
-        remindCounter++;
+        remindCounter += deltaSeconds;
         const intervalInSeconds = (state.settings.remindInterval || 30) * 60;
         if (remindCounter >= intervalInSeconds) {
-            remindCounter = 0;
             showRemindModal();
+            remindCounter %= intervalInSeconds;
         }
     }
 
@@ -710,6 +721,17 @@ function startEngine() {
     if (currentMode === MODES.TIMER && timerState.seconds <= 0) {
         alert('시간을 먼저 설정해주세요.');
         return;
+    }
+
+    const now = Date.now();
+    lastTickTime = now;
+
+    if (currentMode === MODES.POMODORO) {
+        targetEndTime = now + (pomodoroState.seconds * 1000);
+    } else if (currentMode === MODES.TIMER) {
+        targetEndTime = now + (timerState.seconds * 1000);
+    } else if (currentMode === MODES.STOPWATCH) {
+        startTimestamp = now - (stopwatchState.seconds * 1000);
     }
 
     // 완전히 처음 시작할 때만 알림 카운터와 환영 대사 리셋
