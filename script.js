@@ -35,6 +35,7 @@ let state = {
 
 let previewAudio = new Audio();
 const buttonAudio = new Audio('sound/버튼.mp3');
+const resetAudio = new Audio('sound/리셋.mp3');
 
 function playCustomSound(type) {
     if (!state.settings.sounds) return;
@@ -432,6 +433,9 @@ function pauseEngine() {
 }
 
 function resetEngine() {
+    resetAudio.currentTime = 0;
+    resetAudio.play().catch(error => console.log('Audio playback error:', error));
+
     stopEngine();
     remindCounter = 0; // 🔥 카운터 꼬임 방지
     
