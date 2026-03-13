@@ -22,7 +22,7 @@ let state = {
     profiles: [
         {
             name: '지윤',
-            image: '', 
+            image: 'image/기본프로필.png', 
             msgIdle: ['우리 같이 집중해 볼까요?'],
             msgStart: ['오늘도 집중해서 잘해보자!'],
             msgEnd: ['고생했어! 이제 나랑 푹 쉬자~'],
@@ -228,7 +228,7 @@ function renderGreeting() {
 function renderProfileAvatar() {
     const profile = state.profiles[state.currentProfileIndex] || state.profiles[0];
     const mainImg = document.getElementById('main-profile-img');
-    mainImg.src = profile.image ? profile.image : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23999'%3EProfile%3C/text%3E%3C/svg%3E";
+    mainImg.src = profile.image ? profile.image : "image/기본프로필.png";
     
     const nameEl = document.getElementById('main-profile-name');
     if (nameEl) nameEl.textContent = profile.name || '';
@@ -377,7 +377,7 @@ function showFinishModal() {
     }
 
     // Set Avatar image
-    const defaultImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='transparent'/%3E%3C/svg%3E";
+    const defaultImg = "image/기본프로필.png";
     document.getElementById('finish-avatar-img').src = profile.image || defaultImg;
 
     // Set Random Message without formatting with nickname
@@ -622,7 +622,7 @@ function renderProfileGrid() {
     state.profiles.forEach((profile, idx) => {
         const card = document.createElement('div');
         card.className = `profile__card ${state.currentProfileIndex === idx ? 'profile__card--active' : ''}`;
-        const imgUrl = profile.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3C/svg%3E";
+        const imgUrl = profile.image || "image/기본프로필.png";
         card.innerHTML = `
             <div class="profile__card-img"><img src="${imgUrl}"></div>
             <div class="profile__card-name">${profile.name}</div>
@@ -683,7 +683,7 @@ function openProfileModal(index) {
     const profile = isNew ? { name: '', image: '', msgIdle: [], msgStart: [], msgEnd: [], msgClear: [], remindMessages: [] } : state.profiles[index];
     
     document.getElementById('profile-edit-name').value = profile.name;
-    document.getElementById('profile-edit-preview').src = profile.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3C/svg%3E";
+    document.getElementById('profile-edit-preview').src = profile.image || "image/기본프로필.png";
     
     renderMessageSlots('idle', profile.msgIdle || []);
     renderMessageSlots('start', profile.msgStart || []);
