@@ -147,6 +147,16 @@ window.showPage = function(pageId) {
     if (target) {
         target.classList.add('page--active');
         window.scrollTo(0, 0);
+
+        // When returning to the timer page, randomize the idle greeting.
+        if (pageId === 'page-timer') {
+            if (!isTimerRunning && !isTimerPaused) {
+                const profile = state.profiles[state.currentProfileIndex] || state.profiles[0];
+                const nickname = state.settings.nickname || '사용자';
+                const msg = getRandomMessage(profile, 'msgIdle');
+                document.getElementById('greeting-text').textContent = formatMessage(nickname, msg);
+            }
+        }
     } else {
         console.error('Page element not found:', pageId);
     }
@@ -207,6 +217,9 @@ function renderProfileAvatar() {
     const profile = state.profiles[state.currentProfileIndex] || state.profiles[0];
     const mainImg = document.getElementById('main-profile-img');
     mainImg.src = profile.image ? profile.image : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23999'%3EProfile%3C/text%3E%3C/svg%3E";
+    
+    const nameEl = document.getElementById('main-profile-name');
+    if (nameEl) nameEl.textContent = profile.name || '';
 }
 
 function formatTime(totalSeconds) {

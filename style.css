@@ -23,6 +23,7 @@
     --nav-bg: #FFFFFF;
     --bubble-bg: rgba(245, 246, 248, 0.9);
     --bubble-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --profile-name-color: #222222;
 }
 
 /* Theme: Dark (Dark Gray Mode) */
@@ -39,6 +40,7 @@
     --nav-bg: #2B2D31;
     --bubble-bg: rgba(43, 45, 49, 0.9);
     --bubble-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --profile-name-color: #F0F1F5;
 }
 
 /* Theme: Space Purple */
@@ -56,6 +58,7 @@
     --nav-bg: #120A21;
     --bubble-bg: rgba(36, 25, 56, 0.9);
     --bubble-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --profile-name-color: #E2D1F9;
 }
 
 /* Base Styles */
@@ -316,6 +319,14 @@ img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.profile__main-name {
+    margin-top: 15px;
+    font-size: 0.95rem; /* Matches remind bubble text size */
+    font-weight: 700;
+    color: var(--profile-name-color);
+    letter-spacing: 0.5px;
 }
 
 /* Timer */
