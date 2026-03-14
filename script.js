@@ -45,8 +45,17 @@ function playClickSound() {
 }
 
 function playNewClickSound() {
-    newClickAudio.currentTime = 0;
-    newClickAudio.play().catch(error => console.log('New click sound play failed:', error));
+    try {
+        newClickAudio.currentTime = 0;
+        newClickAudio.play().catch(error => {
+            console.log('New click sound play failed:', error);
+            // 브라우저 정책 등에 의해 실패시 객체 재생성 시도 (재생성시 오동작 방지)
+            const retryAudio = new Audio('sound/클릭.mp3');
+            retryAudio.play().catch(() => {});
+        });
+    } catch (e) {
+        console.error('playNewClickSound error:', e);
+    }
 }
 
 function playCustomSound(type) {
@@ -1072,7 +1081,7 @@ function setupEventListeners() {
     
     const navMain = document.getElementById('nav-main');
     if (navMain) navMain.onclick = () => {
-        playNewClickSound();
+        // [사용자 요청] 로고 클릭 시에는 사운드 재생 안 함
         window.showPage('page-timer');
     };
     
